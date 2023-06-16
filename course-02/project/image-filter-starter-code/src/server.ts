@@ -35,14 +35,8 @@ import axios from "axios"
 
   // Root Endpoint
   // Displays a simple message to the user
-  const deleteAllLocalFiles = () => {
-    var files = fs.readdirSync(__dirname + '/util/tmp');
-    files = files.map((x) => __dirname + '/util/tmp/' + x)
-    deleteLocalFiles(files);
-  }
   app.get("/", async (req, res) => {
     res.send("try GET /filteredimage?image_url={{}}")
-    deleteAllLocalFiles();
   });
 
   app.get('/filteredimage', async (req, res) => {
@@ -58,10 +52,10 @@ import axios from "axios"
         res.sendStatus(404)
       })
 
-    await deleteAllLocalFiles();
     var filteredpath = await filterImageFromURL(image_url)
-    res.sendFile(filteredpath)
-  });
+    const files =  [filteredpath]
+    res.sendFile(filteredpath, () => deleteLocalFiles(files))
+  },);
 
   // Start the Serverc
   app.listen(port, () => {
