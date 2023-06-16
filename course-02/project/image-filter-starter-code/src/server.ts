@@ -1,6 +1,8 @@
 import express from 'express';
 import bodyParser from 'body-parser';
-import {filterImageFromURL, deleteLocalFiles} from './util/util';
+import { filterImageFromURL, deleteLocalFiles } from './util/util';
+import fs from "fs";
+import axios from "axios"
 
 (async () => {
 
@@ -9,7 +11,7 @@ import {filterImageFromURL, deleteLocalFiles} from './util/util';
 
   // Set the network port
   const port = process.env.PORT || 8082;
-  
+
   // Use the body parser middleware for post requests
   app.use(bodyParser.json());
 
@@ -30,17 +32,40 @@ import {filterImageFromURL, deleteLocalFiles} from './util/util';
   /**************************************************************************** */
 
   //! END @TODO1
-  
+
   // Root Endpoint
   // Displays a simple message to the user
-  app.get( "/", async ( req, res ) => {
+  const deleteAllLocalFiles = () => {
+    var files = fs.readdirSync(__dirname + '/util/tmp');
+    files = files.map((x) => __dirname + '/util/tmp/' + x)
+    deleteLocalFiles(files);
+  }
+  app.get("/", async (req, res) => {
     res.send("try GET /filteredimage?image_url={{}}")
-  } );
-  
+    deleteAllLocalFiles();
+  });
 
-  // Start the Server
-  app.listen( port, () => {
-      console.log( `server running http://localhost:${ port }` );
-      console.log( `press CTRL+C to stop server` );
-  } );
+  app.get('/filteredimage', async (req, res) => {
+    const query = req.query
+    const image_url = query.image_url
+
+    const arraybuffer = await axios<any, any>({
+      method: 'get',
+      url: image_url,
+      responseType: 'arraybuffer'
+    })
+      .catch((er) => {
+        res.sendStatus(404)
+      })
+
+    await deleteAllLocalFiles();
+    var filteredpath = await filterImageFromURL(image_url)
+    res.sendFile(filteredpath)
+  });
+
+  // Start the Serverc
+  app.listen(port, () => {
+    console.log(`server running http://localhost:${port}`);
+    console.log(`press CTRL+C to stop server`);
+  });
 })();
