@@ -39,11 +39,10 @@ import axios from "axios"
     res.send("try GET /filteredimage?image_url={{}}")
   });
 
-  app.get('/filteredimage', async (req, res) => {
-    const query = req.query
-    const image_url = query.image_url
+  app.get('/filteredimage', async (req: any, res: any) => {
+    const {image_url} = req.query
 
-    const arraybuffer = await axios<any, any>({
+    await axios<any, any>({
       method: 'get',
       url: image_url,
       responseType: 'arraybuffer'
@@ -52,8 +51,8 @@ import axios from "axios"
         res.sendStatus(404)
       })
 
-    var filteredpath = await filterImageFromURL(image_url)
-    const files =  [filteredpath]
+    const filteredpath: string = await filterImageFromURL(image_url)
+    const files: string[] =  [filteredpath]
     res.sendFile(filteredpath, () => deleteLocalFiles(files))
   },);
 
