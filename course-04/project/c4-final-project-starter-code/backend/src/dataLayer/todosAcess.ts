@@ -1,14 +1,11 @@
-// import * as AWS from 'aws-sdk'
 const AWSXRay = require("aws-xray-sdk-core");
-// Transformation of DocumentClient named import from deep path is unsupported in aws-sdk-js-codemod.
-// Please convert to a default import, and re-run aws-sdk-js-codemod.
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { PutCommand, QueryCommand, UpdateCommand, DeleteCommand, DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
-// import { createLogger } from '../utils/logger'
+import { createLogger } from '../utils/logger'
 import { TodoItem } from '../models/TodoItem'
 import { TodoUpdate } from '../models/TodoUpdate';
 
-// const logger = createLogger('TodosAccess')
+const logger = createLogger('TodosAccess')
 
 // TODO: Implement the dataLayer logic
 export class TodosAccess {
@@ -16,9 +13,7 @@ export class TodosAccess {
     private readonly docClient: DynamoDBDocumentClient = createDynamoDBClient(),
     private readonly todosTable = process.env.TODOS_TABLE,
     private readonly bucketName = process.env.ATTACHMENT_S3_BUCKET
-    
-    ) {
-  }
+    ) {}
 
   async getAllTodos(userId: string): Promise<TodoItem[]> {
     const command = new QueryCommand({
@@ -31,6 +26,7 @@ export class TodosAccess {
     const result = await this.docClient.send(command)
 
     const items = result.Items
+    logger.info(`List todo item of user(${userId}) is ${JSON.stringify(items)}`);
     return items as TodoItem[]
   }
 
@@ -40,25 +36,20 @@ export class TodosAccess {
       Item: todo
     })
     await this.docClient.send(command)
+    logger.info(`Create successful new todo item ${JSON.stringify(todo)}`);
     return todo
   }
 
-  //TODO response
   async deleteTodo(todoId: string, userId: string): Promise<null> {
     const command = new DeleteCommand({
       TableName: this.todosTable,
       Key: { userId, todoId }
     })
     await this.docClient.send(command)
+    logger.info(`Delete successful todo item ${todoId}`);
     return null
   }
 
-  //TODO :v
-  /**
-   * 
-   * @param todo 
-   * @returns 
-   */
   async updateTodo(todoId: string, userId: string, updateItem: TodoUpdate): Promise<void> {
     const command = new UpdateCommand({
       TableName: this.todosTable,
@@ -72,6 +63,8 @@ export class TodosAccess {
         ':dn': updateItem.done
       }
     })
+    logger.info(`Update successful todo item(${todoId})  ${JSON.stringify(updateItem)}`);
+
     await this.docClient.send(command)
   }
 
@@ -86,6 +79,7 @@ export class TodosAccess {
       }
     })
     await this.docClient.send(command)
+    logger.info(`Presign Url For Todo Item ${todoId} successful!`);
     return `https://${this.bucketName}.s3.amazonaws.com/${todoId}`
   }
 }

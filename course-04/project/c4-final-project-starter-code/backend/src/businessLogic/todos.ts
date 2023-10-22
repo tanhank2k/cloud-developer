@@ -4,13 +4,15 @@ import { AttachmentUtils } from '../helpers/attachmentUtils';
 import { TodoItem } from '../models/TodoItem'
 import { CreateTodoRequest } from '../requests/CreateTodoRequest'
 import { UpdateTodoRequest } from '../requests/UpdateTodoRequest'
-// import { createLogger } from '../utils/logger'
+import { createLogger } from '../utils/logger'
 import * as uuid from 'uuid'
 // import * as createError from 'http-errors'
 import { parseUserId } from '../auth/utils';
 
 // TODO: Implement businessLogic
 const todosAccess = new TodosAccess()
+const logger = createLogger('todoBusiness')
+
 
 export async function createTodo(
     createTodoRequest: CreateTodoRequest,
@@ -19,15 +21,17 @@ export async function createTodo(
   
     const itemId = uuid.v4()
     const userId = parseUserId(jwtToken)
-  
-    return await todosAccess.createTodo({
+    const newTodoItem: TodoItem = {
       todoId: itemId,
       userId: userId,
       name: createTodoRequest.name,
       dueDate: createTodoRequest.dueDate,
       done: false,
       createdAt: new Date().toISOString()
-    })
+    }
+    logger.info(`User add new todo task ${JSON.stringify(newTodoItem)}`);
+
+    return await todosAccess.createTodo(newTodoItem);
   }
 
   
@@ -37,6 +41,7 @@ export async function deleteTodo(
 ): Promise<TodoItem> {
 
   const userId = parseUserId(jwtToken)
+  logger.info(`User delete 1 todo task: ${toDoId}`);
 
   return await todosAccess.deleteTodo(
     toDoId,
@@ -62,6 +67,8 @@ export async function updateTodo(
 
   const userId = parseUserId(jwtToken)
   const updateItem: TodoUpdate = {...updateTodoRequest}
+  logger.info(`User update information of todo task: ${JSON.stringify(updateItem)}`);
+
   await todosAccess.updateTodo(todoId, userId, updateItem)
 }
   
@@ -73,6 +80,7 @@ export async function createAttachmentPresignedUrl(
   AttachmentUtils(todoId)
   const userId = parseUserId(jwtToken)
   const uploadUrl = await todosAccess.updatePresignUrlForTodoItem(todoId, userId);
+  logger.info(`Attachment Presigned Url: ${uploadUrl}`);
   return uploadUrl
 }
   
