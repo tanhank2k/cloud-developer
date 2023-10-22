@@ -1,6 +1,14 @@
-import * as AWS from 'aws-sdk'
-import * as AWSXRay from 'aws-xray-sdk'
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+const s3 = new S3Client({})
 
-const XAWS = AWSXRay.captureAWS(AWS)
+const bucketName = process.env.ATTACHMENT_S3_BUCKET
 
 // TODO: Implement the fileStogare logic
+export function AttachmentUtils(todoId: string) {
+
+  const command = new PutObjectCommand ({
+    Bucket: bucketName,
+    Key: todoId,
+  });
+  return s3.send(command)
+}
